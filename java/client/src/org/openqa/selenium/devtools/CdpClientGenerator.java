@@ -57,7 +57,7 @@ import static java.util.stream.Collectors.joining;
 public class CdpClientGenerator {
 
   public static void main(String[] args) throws IOException {
-    Path source = Paths.get("java/client/src/org/openqa/selenium/devtools");
+    Path source = Paths.get(".");
     Path target = Files.createTempDirectory("devtools");
     String devtoolsDir = "org/openqa/selenium/devtools/";
 
