@@ -32,6 +32,9 @@ import org.openqa.selenium.grid.node.Node;
 import org.openqa.selenium.grid.node.local.LocalNode;
 import org.openqa.selenium.grid.sessionmap.SessionMap;
 import org.openqa.selenium.grid.sessionmap.local.LocalSessionMap;
+import org.openqa.selenium.grid.sessionqueue.NewSessionQueuer;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueue;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueuer;
 import org.openqa.selenium.grid.testing.PassthroughHttpClient;
 import org.openqa.selenium.grid.testing.TestSessionFactory;
 import org.openqa.selenium.grid.web.CombinedHandler;
@@ -44,10 +47,12 @@ import org.openqa.selenium.remote.tracing.Tracer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -62,6 +67,7 @@ public class RouterTest {
   private EventBus bus;
   private CombinedHandler handler;
   private SessionMap sessions;
+  private NewSessionQueuer queuer;
   private Distributor distributor;
   private Router router;
 
@@ -76,7 +82,21 @@ public class RouterTest {
     sessions = new LocalSessionMap(tracer, bus);
     handler.addHandler(sessions);
 
-    distributor = new LocalDistributor(tracer, bus, clientFactory, sessions, null);
+    LocalNewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
+        tracer,
+        bus,
+        Duration.of(2, SECONDS));
+    queuer = new LocalNewSessionQueuer(tracer, bus, localNewSessionQueue);
+    handler.addHandler(queuer);
+
+    distributor = new LocalDistributor(
+        tracer,
+        bus,
+        clientFactory,
+        sessions,
+        queuer,
+        null,
+        Duration.of(2, SECONDS));
     handler.addHandler(distributor);
 
     router = new Router(tracer, clientFactory, sessions, distributor);

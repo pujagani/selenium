@@ -42,6 +42,9 @@ import org.openqa.selenium.grid.server.Server;
 import org.openqa.selenium.grid.sessionmap.SessionMap;
 import org.openqa.selenium.grid.sessionmap.local.LocalSessionMap;
 import org.openqa.selenium.grid.sessionmap.remote.RemoteSessionMap;
+import org.openqa.selenium.grid.sessionqueue.NewSessionQueuer;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueue;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueuer;
 import org.openqa.selenium.grid.testing.TestSessionFactory;
 import org.openqa.selenium.grid.web.CombinedHandler;
 import org.openqa.selenium.grid.web.RoutableHttpClientFactory;
@@ -65,6 +68,7 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
@@ -73,6 +77,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import static java.time.Duration.ofSeconds;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -129,7 +134,18 @@ public class EndToEndTest {
     SessionMap sessions = new LocalSessionMap(tracer, bus);
     handler.addHandler(sessions);
 
-    Distributor distributor = new LocalDistributor(tracer, bus, clientFactory, sessions, null);
+    LocalNewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
+        tracer,
+        bus,
+        Duration.of(2, SECONDS));
+    NewSessionQueuer queuer = new LocalNewSessionQueuer(tracer, bus, localNewSessionQueue);
+    Distributor distributor = new LocalDistributor(
+        tracer,
+        bus,
+        clientFactory,
+        sessions,
+        queuer,null,
+        Duration.of(2,SECONDS));
     handler.addHandler(distributor);
 
     LocalNode node = LocalNode.builder(tracer, bus, nodeUri, nodeUri, null)
@@ -164,12 +180,20 @@ public class EndToEndTest {
     HttpClient client = HttpClient.Factory.createDefault().createClient(sessionServer.getUrl());
     SessionMap sessions = new RemoteSessionMap(tracer, client);
 
+    LocalNewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
+        tracer,
+        bus,
+        Duration.of(2, SECONDS));
+    NewSessionQueuer queuer = new LocalNewSessionQueuer(tracer, bus, localNewSessionQueue);
+
     LocalDistributor localDistributor = new LocalDistributor(
         tracer,
         bus,
         clientFactory,
         sessions,
-        null);
+        queuer,
+        null,
+        Duration.of(2, SECONDS));
     Server<?> distributorServer = createServer(localDistributor);
     distributorServer.start();
 

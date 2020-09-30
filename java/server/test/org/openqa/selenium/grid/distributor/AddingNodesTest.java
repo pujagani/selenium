@@ -43,6 +43,8 @@ import org.openqa.selenium.grid.node.Node;
 import org.openqa.selenium.grid.node.local.LocalNode;
 import org.openqa.selenium.grid.security.Secret;
 import org.openqa.selenium.grid.sessionmap.local.LocalSessionMap;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueue;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueuer;
 import org.openqa.selenium.grid.testing.TestSessionFactory;
 import org.openqa.selenium.grid.web.CombinedHandler;
 import org.openqa.selenium.grid.web.RoutableHttpClientFactory;
@@ -70,6 +72,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.openqa.selenium.grid.data.Availability.UP;
 import static org.openqa.selenium.remote.Dialect.W3C;
@@ -100,7 +103,19 @@ public class AddingNodesTest {
       HttpClient.Factory.createDefault());
 
     LocalSessionMap sessions = new LocalSessionMap(tracer, bus);
-    Distributor local = new LocalDistributor(tracer, bus, clientFactory, sessions, null);
+    LocalNewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
+        tracer,
+        bus,
+        Duration.of(1, SECONDS));
+    LocalNewSessionQueuer queuer = new LocalNewSessionQueuer(tracer, bus, localNewSessionQueue);
+    Distributor local = new LocalDistributor(
+        tracer,
+        bus,
+        clientFactory,
+        sessions,
+        queuer,
+        null,
+        Duration.of(2, SECONDS));
     handler.addHandler(local);
     distributor = new RemoteDistributor(tracer, clientFactory, externalUrl, registrationSecret);
 

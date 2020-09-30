@@ -32,6 +32,9 @@ import org.openqa.selenium.grid.node.SessionFactory;
 import org.openqa.selenium.grid.node.local.LocalNode;
 import org.openqa.selenium.grid.sessionmap.SessionMap;
 import org.openqa.selenium.grid.sessionmap.local.LocalSessionMap;
+import org.openqa.selenium.grid.sessionqueue.NewSessionQueuer;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueue;
+import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueuer;
 import org.openqa.selenium.json.Json;
 import org.openqa.selenium.remote.http.Contents;
 import org.openqa.selenium.remote.http.HttpClient;
@@ -43,10 +46,12 @@ import org.openqa.selenium.remote.tracing.Tracer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.openqa.selenium.json.Json.MAP_TYPE;
 import static org.openqa.selenium.remote.http.HttpMethod.GET;
@@ -68,7 +73,21 @@ public class GraphqlHandlerTest {
     HttpClient.Factory clientFactory = HttpClient.Factory.createDefault();
 
     SessionMap sessions = new LocalSessionMap(tracer, events);
-    distributor = new LocalDistributor(tracer, events, clientFactory, sessions, null);
+
+    LocalNewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
+        tracer,
+        events,
+        Duration.of(2, SECONDS));
+    NewSessionQueuer queuer = new LocalNewSessionQueuer(tracer, events, localNewSessionQueue);
+
+    distributor = new LocalDistributor(
+        tracer,
+        events,
+        clientFactory,
+        sessions,
+        queuer,
+        null,
+        Duration.of(2, SECONDS));
   }
 
   @Test
