@@ -132,24 +132,26 @@ public class LocalDistributor extends Distributor {
     bus.addListener(NodeStatusEvent.listener(status -> model.refresh(registrationSecret, status)));
     bus.addListener(NodeDrainComplete.listener(this::remove));
 
-    bus.addListener(NewSessionRequestEvent.listener(reqId -> {
-      Optional<HttpRequest> sessionRequest = this.sessionRequests.remove();
-      // Check if polling the queue did not return null
-      if (sessionRequest.isPresent()) {
-        handleNewSessionRequest(sessionRequest.get(), reqId);
-      } else {
-        fireSessionRejectedEvent("Unable to poll request from the new session request queue.",
-                                 reqId);
-      }
-    }));
+    bus.addListener(
+        NewSessionRequestEvent.listener(
+            reqId -> {
+              Optional<HttpRequest> sessionRequest = this.sessionRequests.remove();
+              // Check if polling the queue did not return null
+              if (sessionRequest.isPresent()) {
+                handleNewSessionRequest(sessionRequest.get(), reqId);
+              } else {
+                fireSessionRejectedEvent(
+                    "Unable to poll request from the new session request queue.", reqId);
+              }
+            }));
   }
 
   private void handleNewSessionRequest(HttpRequest sessionRequest, RequestId reqId) {
 
     Span span = newSpanAsChildOf(tracer, sessionRequest, "distributor.poll_queue");
     Map<String, EventAttributeValue> attributeMap = new HashMap<>();
-    attributeMap.put(AttributeKey.LOGGER_CLASS.getKey(),
-                     EventAttribute.setValue(getClass().getName()));
+    attributeMap.put(
+        AttributeKey.LOGGER_CLASS.getKey(), EventAttribute.setValue(getClass().getName()));
     span.setAttribute(AttributeKey.REQUEST_ID.getKey(), reqId.toString());
     attributeMap.put(AttributeKey.REQUEST_ID.getKey(), EventAttribute.setValue(reqId.toString()));
 
@@ -161,9 +163,10 @@ public class LocalDistributor extends Distributor {
       } else {
         try {
           CreateSessionResponse sessionResponse = newSession(sessionRequest);
-          NewSessionResponse newSessionResponse =
-              new NewSessionResponse(reqId, sessionResponse.getSession(),
-                                     sessionResponse.getDownstreamEncodedResponse());
+          NewSessionResponse newSessionResponse = new NewSessionResponse(
+              reqId,
+              sessionResponse.getSession(),
+              sessionResponse.getDownstreamEncodedResponse());
 
           bus.fire(new NewSessionResponseEvent(newSessionResponse));
         } catch (SessionNotCreatedException e) {
@@ -215,13 +218,14 @@ public class LocalDistributor extends Distributor {
     Duration requestTimeout = new NewSessionQueueOptions(config).getSessionRequestTimeout();
     BaseServerOptions serverOptions = new BaseServerOptions(config);
 
-    return new LocalDistributor(tracer,
-                                bus,
-                                clientFactory,
-                                sessions,
-                                sessionRequests,
-                                serverOptions.getRegistrationSecret(),
-                                requestTimeout);
+    return new LocalDistributor(
+        tracer,
+        bus,
+        clientFactory,
+        sessions,
+        sessionRequests,
+        serverOptions.getRegistrationSecret(),
+        requestTimeout);
   }
 
   @Override

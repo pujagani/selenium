@@ -69,10 +69,7 @@ public class NodeStatus {
   }
 
   public boolean hasCapability(Capabilities caps) {
-    long count = slots.stream()
-        .filter(slot -> slot.isSupporting(caps))
-        .count();
-    return count > 0;
+    return  slots.stream().anyMatch(slot -> slot.isSupporting(caps));
   }
 
   public boolean hasCapacity() {
