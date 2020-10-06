@@ -218,7 +218,6 @@ public class LocalDistributor extends Distributor {
             "org.openqa.selenium.grid.sessionqueue.remote.RemoteNewSessionQueuer");
     Duration requestTimeout = new NewSessionQueueOptions(config).getSessionRequestTimeout();
     BaseServerOptions serverOptions = new BaseServerOptions(config);
-
     return new LocalDistributor(
         tracer,
         bus,

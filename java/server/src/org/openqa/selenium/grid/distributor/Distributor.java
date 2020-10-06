@@ -70,6 +70,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static org.openqa.selenium.grid.data.Availability.UP;
 import static org.openqa.selenium.remote.RemoteTags.CAPABILITIES;
 import static org.openqa.selenium.remote.RemoteTags.CAPABILITIES_EVENT;
 import static org.openqa.selenium.remote.RemoteTags.SESSION_ID;
@@ -141,13 +142,13 @@ public abstract class Distributor implements HasReadyState, Predicate<HttpReques
 
     Json json = new Json();
     routes = Route.combine(
-        post("/session").to(() -> req -> {
-          CreateSessionResponse sessionResponse = newSession(req);
-          return new HttpResponse().setContent(bytes(sessionResponse.getDownstreamEncodedResponse()));
-        }),
-        post("/se/grid/distributor/session")
-            .to(() -> new CreateSession(this))
-            .with(requiresSecret),
+//        post("/session").to(() -> req -> {
+//          CreateSessionResponse sessionResponse = newSession(req);
+//          return new HttpResponse().setContent(bytes(sessionResponse.getDownstreamEncodedResponse()));
+//        }),
+//        post("/se/grid/distributor/session")
+//            .to(() -> new CreateSession(this))
+//            .with(requiresSecret),
         post("/se/grid/distributor/node")
             .to(() -> new AddNode(tracer, this, json, httpClientFactory, registrationSecret))
             .with(requiresSecret),
@@ -181,8 +182,7 @@ public abstract class Distributor implements HasReadyState, Predicate<HttpReques
 
     Span span = newSpanAsChildOf(tracer, request, "distributor.new_session");
     Map<String, EventAttributeValue> attributeMap = new HashMap<>();
-    try (
-        Reader reader = reader(request);
+    try (Reader reader = reader(request);
         NewSessionPayload payload = NewSessionPayload.create(reader)) {
       Objects.requireNonNull(payload, "Requests to process must be set.");
 
@@ -205,10 +205,9 @@ public abstract class Distributor implements HasReadyState, Predicate<HttpReques
       }
 
       Optional<Supplier<CreateSessionResponse>> selected;
-      CreateSessionRequest firstRequest = new CreateSessionRequest(
-          payload.getDownstreamDialects(),
-          iterator.next(),
-          ImmutableMap.of("span", span));
+      CreateSessionRequest firstRequest =
+          new CreateSessionRequest(
+              payload.getDownstreamDialects(), iterator.next(), ImmutableMap.of("span", span));
 
       Lock writeLock = this.lock.writeLock();
       writeLock.lock();
@@ -216,13 +215,14 @@ public abstract class Distributor implements HasReadyState, Predicate<HttpReques
         Set<NodeStatus> model = ImmutableSet.copyOf(getAvailableNodes());
 
         // Reject new session immediately if no node has the required capabilities
-        boolean hostsWithCaps = model.stream()
-            .anyMatch(nodeStatus -> nodeStatus.hasCapability(firstRequest.getCapabilities()));
+        boolean hostsWithCaps =
+            model.stream()
+                .anyMatch(nodeStatus -> nodeStatus.hasCapability(firstRequest.getCapabilities()));
 
         if (!hostsWithCaps) {
           throw new SessionNotCreatedException(
-              "No host supports the capabilities required: " + payload.stream()
-                  .map(Capabilities::toString).collect(Collectors.joining(", ")));
+              "No host supports the capabilities required: "
+                  + payload.stream().map(Capabilities::toString).collect(Collectors.joining(", ")));
         }
 
         // Find a host that supports the capabilities present in the new session
@@ -261,7 +261,6 @@ public abstract class Distributor implements HasReadyState, Predicate<HttpReques
         return Either.right(sessionResponse);
       }
     } catch (SessionNotCreatedException e) {
-
       span.setAttribute("error", true);
       span.setStatus(Status.ABORTED);
 
@@ -299,7 +298,8 @@ public abstract class Distributor implements HasReadyState, Predicate<HttpReques
 
   protected abstract Set<NodeStatus> getAvailableNodes();
 
-  protected abstract Supplier<CreateSessionResponse> reserve(SlotId slot, CreateSessionRequest request);
+  protected abstract Supplier<CreateSessionResponse> reserve(
+      SlotId slot, CreateSessionRequest request);
 
   @Override
   public boolean test(HttpRequest httpRequest) {

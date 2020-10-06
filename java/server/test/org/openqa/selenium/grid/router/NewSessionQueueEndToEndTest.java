@@ -17,8 +17,11 @@
 
 package org.openqa.selenium.grid.router;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,7 +29,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.ImmutableCapabilities;
-import org.openqa.selenium.SessionNotCreatedException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.events.EventBus;
 import org.openqa.selenium.events.zeromq.ZeroMqEventBus;
@@ -42,6 +44,7 @@ import org.openqa.selenium.grid.server.Server;
 import org.openqa.selenium.grid.sessionmap.SessionMap;
 import org.openqa.selenium.grid.sessionmap.local.LocalSessionMap;
 import org.openqa.selenium.grid.sessionmap.remote.RemoteSessionMap;
+import org.openqa.selenium.grid.sessionqueue.NewSessionQueue;
 import org.openqa.selenium.grid.sessionqueue.NewSessionQueuer;
 import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueue;
 import org.openqa.selenium.grid.sessionqueue.local.LocalNewSessionQueuer;
@@ -49,20 +52,17 @@ import org.openqa.selenium.grid.sessionqueue.remote.RemoteNewSessionQueuer;
 import org.openqa.selenium.grid.testing.TestSessionFactory;
 import org.openqa.selenium.grid.web.CombinedHandler;
 import org.openqa.selenium.grid.web.RoutableHttpClientFactory;
-import org.openqa.selenium.grid.web.Values;
 import org.openqa.selenium.json.Json;
 import org.openqa.selenium.net.PortProber;
 import org.openqa.selenium.netty.server.NettyServer;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.SessionId;
-import org.openqa.selenium.remote.http.Contents;
 import org.openqa.selenium.remote.http.HttpClient;
 import org.openqa.selenium.remote.http.HttpHandler;
 import org.openqa.selenium.remote.http.HttpRequest;
 import org.openqa.selenium.remote.http.HttpResponse;
 import org.openqa.selenium.remote.tracing.DefaultTestTracer;
 import org.openqa.selenium.remote.tracing.Tracer;
-import org.openqa.selenium.support.ui.FluentWait;
 import org.zeromq.ZContext;
 
 import java.io.UncheckedIOException;
@@ -72,35 +72,23 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
-
-import static java.time.Duration.ofSeconds;
-import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.openqa.selenium.json.Json.MAP_TYPE;
-import static org.openqa.selenium.remote.http.Contents.asJson;
-import static org.openqa.selenium.remote.http.Contents.string;
-import static org.openqa.selenium.remote.http.HttpMethod.GET;
-import static org.openqa.selenium.remote.http.HttpMethod.POST;
+import java.util.logging.Logger;
 
 @RunWith(Parameterized.class)
-public class EndToEndTest {
+public class NewSessionQueueEndToEndTest {
 
+  private static final Logger LOG = Logger.getLogger(NewSessionQueueEndToEndTest.class.getName());
   private static final Capabilities CAPS = new ImmutableCapabilities("browserName", "cheese");
   private Json json = new Json();
 
   @Parameterized.Parameters(name = "End to End {0}")
   public static Collection<Supplier<Object[]>> buildGrids() {
     return ImmutableSet.of(
-      safely(EndToEndTest::createRemotes),
-      safely(EndToEndTest::createInMemory));
+        safely(NewSessionQueueEndToEndTest::createRemotes),
+        safely(NewSessionQueueEndToEndTest::createInMemory));
   }
 
   @Parameter
@@ -117,7 +105,7 @@ public class EndToEndTest {
     this.clientFactory = (HttpClient.Factory) raw[1];
   }
 
-  private static Object[] createInMemory() throws MalformedURLException, URISyntaxException  {
+  private static Object[] createInMemory() throws MalformedURLException, URISyntaxException {
     Tracer tracer = DefaultTestTracer.createTracer();
     EventBus bus = ZeroMqEventBus.create(
         new ZContext(),
@@ -135,12 +123,11 @@ public class EndToEndTest {
     SessionMap sessions = new LocalSessionMap(tracer, bus);
     handler.addHandler(sessions);
 
-    LocalNewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
+    NewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
         tracer,
         bus,
-        Duration.of(2, SECONDS));
+        Duration.of(10, SECONDS));
     NewSessionQueuer queuer = new LocalNewSessionQueuer(tracer, bus, localNewSessionQueue);
-
     handler.addHandler(queuer);
 
     Distributor distributor = new LocalDistributor(
@@ -150,10 +137,11 @@ public class EndToEndTest {
         sessions,
         queuer,
         null,
-        Duration.of(2,SECONDS));
+        Duration.of(30, SECONDS));
     handler.addHandler(distributor);
 
     LocalNode node = LocalNode.builder(tracer, bus, nodeUri, nodeUri, null)
+        .add(CAPS, createFactory(nodeUri))
         .add(CAPS, createFactory(nodeUri))
         .build();
     handler.addHandler(node);
@@ -164,7 +152,7 @@ public class EndToEndTest {
     Server<?> server = createServer(router);
     server.start();
 
-    return new Object[] { server, clientFactory };
+    return new Object[]{server, clientFactory};
   }
 
   private static Object[] createRemotes() throws URISyntaxException {
@@ -188,14 +176,20 @@ public class EndToEndTest {
     LocalNewSessionQueue localNewSessionQueue = new LocalNewSessionQueue(
         tracer,
         bus,
-        Duration.of(2, SECONDS));
-    LocalNewSessionQueuer localNewSessionQueuer = new LocalNewSessionQueuer(tracer, bus, localNewSessionQueue);
+        Duration.of(10, SECONDS));
+    LocalNewSessionQueuer
+        localNewSessionQueuer =
+        new LocalNewSessionQueuer(tracer, bus, localNewSessionQueue);
 
     Server<?> newSessionServer = createServer(localNewSessionQueuer);
     newSessionServer.start();
 
-    HttpClient remoteSessionQueuerclient = HttpClient.Factory.createDefault().createClient(newSessionServer.getUrl());
-    RemoteNewSessionQueuer newSessionQueuer = new RemoteNewSessionQueuer(tracer, remoteSessionQueuerclient);
+    HttpClient
+        remoteSessionQueuerclient =
+        HttpClient.Factory.createDefault().createClient(newSessionServer.getUrl());
+    RemoteNewSessionQueuer
+        newSessionQueuer =
+        new RemoteNewSessionQueuer(tracer, remoteSessionQueuerclient);
 
     LocalDistributor localDistributor = new LocalDistributor(
         tracer,
@@ -204,35 +198,36 @@ public class EndToEndTest {
         sessions,
         newSessionQueuer,
         null,
-        Duration.of(2, SECONDS));
+        Duration.of(30, SECONDS));
     Server<?> distributorServer = createServer(localDistributor);
     distributorServer.start();
 
     Distributor distributor = new RemoteDistributor(
-      tracer,
-      HttpClient.Factory.createDefault(),
-      distributorServer.getUrl(),
-      null);
+        tracer,
+        HttpClient.Factory.createDefault(),
+        distributorServer.getUrl(),
+        null);
 
-    int port = PortProber.findFreePort();
-    URI nodeUri = new URI("http://localhost:" + port);
-    LocalNode localNode = LocalNode.builder(tracer, bus, nodeUri, nodeUri, null)
-        .add(CAPS, createFactory(nodeUri))
+    int nodePort = PortProber.findFreePort();
+    URI uri = new URI("http://localhost:" + nodePort);
+    LocalNode node = LocalNode.builder(tracer, bus, uri, uri, null)
+        .add(CAPS, createFactory(uri))
+        .add(CAPS, createFactory(uri))
         .build();
 
     Server<?> nodeServer = new NettyServer(
         new BaseServerOptions(
-            new MapConfig(ImmutableMap.of("server", ImmutableMap.of("port", port)))),
-        localNode);
+            new MapConfig(ImmutableMap.of("server", ImmutableMap.of("port", nodePort)))),
+        node);
     nodeServer.start();
 
-    distributor.add(localNode);
+    distributor.add(node);
 
     Router router = new Router(tracer, clientFactory, sessions, newSessionQueuer, distributor);
     Server<?> routerServer = createServer(router);
     routerServer.start();
 
-    return new Object[] { routerServer, clientFactory };
+    return new Object[]{routerServer, clientFactory};
   }
 
   private static Server<?> createServer(HttpHandler handler) {
@@ -247,161 +242,38 @@ public class EndToEndTest {
     class SpoofSession extends Session implements HttpHandler {
 
       private SpoofSession(Capabilities capabilities) {
-        super(new SessionId(UUID.randomUUID()), serverUri, new ImmutableCapabilities(), capabilities, Instant.now());
+        super(new SessionId(UUID.randomUUID()),
+              serverUri,
+              new ImmutableCapabilities(),
+              capabilities,
+              Instant.now());
       }
 
       @Override
       public HttpResponse execute(HttpRequest req) throws UncheckedIOException {
         return new HttpResponse();
       }
-   }
+    }
 
     return new TestSessionFactory((id, caps) -> new SpoofSession(caps));
   }
 
   @Test
-  public void success() {
-    // The node added only has a single node. Make sure we can start and stop sessions.
-    Capabilities caps = new ImmutableCapabilities("browserName", "cheese", "type", "cheddar");
+  public void shouldBeAbleToCreateSessionOnTwoNodes() {
+
+    Capabilities caps = new ImmutableCapabilities("browserName", "cheese");
     WebDriver driver = new RemoteWebDriver(server.getUrl(), caps);
     driver.get("http://www.google.com");
 
-    // Kill the session, and wait until the grid says it's ready
-    driver.quit();
-  }
-
-  @Test
-  public void exerciseDriver() {
-    // The node added only has a single node. Make sure we can start and stop sessions.
-    Capabilities caps = new ImmutableCapabilities("browserName", "cheese", "type", "cheddar");
-    WebDriver driver = new RemoteWebDriver(server.getUrl(), caps);
-    driver.get("http://www.google.com");
-
-    // The node is still open. Now create a second session. This should fail
-    try {
-      WebDriver disposable = new RemoteWebDriver(server.getUrl(), caps);
-      disposable.quit();
-      fail("Should not have been able to create driver");
-    } catch (SessionNotCreatedException expected) {
-      // Fall through
-    }
-
-    // Kill the session, and wait until the grid says it's ready
-    driver.quit();
-
-    HttpClient client = clientFactory.createClient(server.getUrl());
-    new FluentWait<>("").withTimeout(ofSeconds(200)).until(obj -> {
-      try {
-        HttpResponse response = client.execute(new HttpRequest(GET, "/status"));
-        System.out.println(Contents.string(response));
-        Map<String, Object> status = Values.get(response, MAP_TYPE);
-        return Boolean.TRUE.equals(status.get("ready"));
-      } catch (UncheckedIOException e) {
-        e.printStackTrace();
-        return false;
-      }
-    });
-
-    // And now we're good to go.
-    driver = new RemoteWebDriver(server.getUrl(), caps);
-    driver.get("http://www.google.com");
-    driver.quit();
-  }
-
-  @Test
-  public void shouldRejectSessionRequestIfCapsDontExist() {
-    Capabilities caps = new ImmutableCapabilities("browserName", "cheese", "type", "cheddar");
-    WebDriver driver = new RemoteWebDriver(server.getUrl(), caps);
-    driver.get("http://www.google.com");
-
-    try {
-      WebDriver disposable = new RemoteWebDriver(server.getUrl(), new ImmutableCapabilities("browserName", "brie"));
-      disposable.quit();
-      fail("Should not have been able to create driver");
-    } catch (SessionNotCreatedException expected) {
-      // Fall through
-    }
+    // First node is busy with the first session. Now create a second session.
+    // This should be able to add to new session queue and create a session on the second node.
+    WebDriver
+        disposable =
+        new RemoteWebDriver(server.getUrl(),  new ImmutableCapabilities("browserName", "cheese"));
+    disposable.get("http://www.yahoo.com");
+    disposable.quit();
 
     driver.quit();
-  }
-
-  @Test
-  public void shouldRetryAndTimeOutSessionRequest() {
-    Capabilities caps = new ImmutableCapabilities("browserName", "cheese", "type", "cheddar");
-    WebDriver driver = new RemoteWebDriver(server.getUrl(), caps);
-    driver.get("http://www.google.com");
-
-    try {
-      // New session request will be added to the queue and retried.
-      // Request will timeout and return a response since node is still blocked.
-      WebDriver disposable = new RemoteWebDriver(server.getUrl(), caps);
-      disposable.quit();
-      fail("Should not have been able to create driver");
-    } catch (SessionNotCreatedException expected) {
-      // Fall through
-    }
-
-    driver.quit();
-  }
-
-  @Test
-  public void shouldAllowPassthroughForW3CMode() {
-    HttpRequest request = new HttpRequest(POST, "/session");
-    request.setContent(asJson(
-        ImmutableMap.of(
-            "capabilities", ImmutableMap.of(
-                "alwaysMatch", ImmutableMap.of("browserName", "cheese")))));
-
-    HttpClient client = clientFactory.createClient(server.getUrl());
-    HttpResponse response = client.execute(request);
-
-    assertEquals(200, response.getStatus());
-
-    Map<String, Object> topLevel = json.toType(string(response), MAP_TYPE);
-
-    // There should not be a numeric status field
-    assertFalse(string(request), topLevel.containsKey("status"));
-
-    // And the value should have all the good stuff in it: the session id and the capabilities
-    Map<?, ?> value = (Map<?, ?>) topLevel.get("value");
-    assertThat(value.get("sessionId")).isInstanceOf(String.class);
-
-    Map<?, ?> caps = (Map<?, ?>) value.get("capabilities");
-    assertEquals("cheese", caps.get("browserName"));
-  }
-
-  @Test
-  public void shouldAllowPassthroughForJWPMode() {
-    HttpRequest request = new HttpRequest(POST, "/session");
-    request.setContent(asJson(
-        ImmutableMap.of(
-            "desiredCapabilities", ImmutableMap.of(
-                "browserName", "cheese"))));
-
-    HttpClient client = clientFactory.createClient(server.getUrl());
-    HttpResponse response = client.execute(request);
-
-    assertEquals(200, response.getStatus());
-
-    Map<String, Object> topLevel = json.toType(string(response), MAP_TYPE);
-
-    // There should be a numeric status field
-    assertEquals(topLevel.toString(), 0L, topLevel.get("status"));
-    // The session id
-    assertTrue(string(request), topLevel.containsKey("sessionId"));
-
-    // And the value should be the capabilities.
-    Map<?, ?> value = (Map<?, ?>) topLevel.get("value");
-    assertEquals(string(request), "cheese", value.get("browserName"));
-  }
-
-  @Test
-  public void shouldDoProtocolTranslationFromW3CLocalEndToJWPRemoteEnd() {
-
-  }
-
-  @Test
-  public void shouldDoProtocolTranslationFromJWPLocalEndToW3CRemoteEnd() {
 
   }
 

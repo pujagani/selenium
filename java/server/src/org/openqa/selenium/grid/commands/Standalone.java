@@ -169,7 +169,7 @@ public class Standalone extends TemplateGridCommand {
         newSessionQueueOptions.getSessionRequestTimeout());
     combinedHandler.addHandler(distributor);
 
-    Routable router = new Router(tracer, clientFactory, sessions, distributor)
+    Routable router = new Router(tracer, clientFactory, sessions, queuer, distributor)
         .with(networkOptions.getSpecComplianceChecks());
 
     HttpHandler readinessCheck = req -> {

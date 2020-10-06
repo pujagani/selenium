@@ -99,7 +99,7 @@ public class RouterTest {
         Duration.of(2, SECONDS));
     handler.addHandler(distributor);
 
-    router = new Router(tracer, clientFactory, sessions, distributor);
+    router = new Router(tracer, clientFactory, sessions, queuer, distributor);
   }
 
   @Test
