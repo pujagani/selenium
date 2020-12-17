@@ -17,5 +17,6 @@ java_export(
         "//java/client/src/org/openqa/selenium:core",
         "//java/client/src/org/openqa/selenium/json",
         artifact("com.google.guava:guava"),
+        artifact("net.jodah:failsafe"),
     ],
 )

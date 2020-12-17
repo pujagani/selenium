@@ -1,10 +1,15 @@
 load("@rules_jvm_external//:defs.bzl", "artifact")
 load("//java:defs.bzl", "java_test_suite")
 
+MEDIUM_TESTS = [
+    "RetryRequestTest.java",
+]
+
 java_test_suite(
     name = "small-tests",
     size = "small",
-    srcs = glob(["*.java"]),
+    srcs = glob(["*.java"],
+                exclude = MEDIUM_TESTS),
     javacopts = [
         "--release",
         "11",
@@ -18,4 +23,23 @@ java_test_suite(
         artifact("com.google.guava:guava"),
         artifact("junit:junit"),
     ],
+)
+
+java_test_suite(
+    name = "MediumTests",
+    size = "medium",
+    srcs = MEDIUM_TESTS,
+    javacopts = [
+            "--release",
+            "11",
+    ],
+    deps = [
+        "//java/client/src/org/openqa/selenium:core",
+        "//java/client/src/org/openqa/selenium/remote/http",
+        "//java/client/src/org/openqa/selenium/remote/http/netty",
+        "//java/client/test/org/openqa/selenium/environment",
+        artifact("org.assertj:assertj-core"),
+        artifact("com.google.guava:guava"),
+        artifact("junit:junit"),
+       ],
 )

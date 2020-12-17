@@ -29,7 +29,8 @@ import org.openqa.selenium.internal.Require;
 
 public class ClientConfig {
 
-  private static final AddSeleniumUserAgent DEFAULT_FILTER = new AddSeleniumUserAgent();
+  private static final Filter DEFAULT_FILTER =
+    new AddSeleniumUserAgent().andThen(new RetryRequest());
   private final URI baseUri;
   private final Duration connectionTimeout;
   private final Duration readTimeout;
@@ -54,7 +55,7 @@ public class ClientConfig {
       null,
       Duration.ofSeconds(10),
       Duration.ofMinutes(3),
-      new AddSeleniumUserAgent(),
+      DEFAULT_FILTER,
       null);
   }
 
