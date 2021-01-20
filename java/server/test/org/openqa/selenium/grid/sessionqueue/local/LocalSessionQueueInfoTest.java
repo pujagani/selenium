@@ -55,8 +55,8 @@ public class LocalSessionQueueInfoTest {
   public static final String BROWSER = "browser";
   public static final String PLATFORM = "platform";
   public static final String PLATFORMS = "platforms";
-  public static final String VERSION = "version";
-  public static final String VERSIONS = "versions";
+  public static final String BROWSER_VERSION = "browserVersion";
+  public static final String BROWSER_VERSIONS = "browserVersions";
   public static final String BROWSERNAME = "browserName";
   public static final String CHROME = "chrome";
   public static final String URI = "/session";
@@ -79,7 +79,7 @@ public class LocalSessionQueueInfoTest {
     ImmutableCapabilities chromeCaps = new ImmutableCapabilities(
       BROWSERNAME, CHROME,
       PLATFORM, "mac",
-      VERSION, "87");
+      BROWSER_VERSION, "87");
     NewSessionPayload chromePayload = NewSessionPayload.create(chromeCaps);
     HttpRequest chromeRequest = createRequest(chromePayload, POST, URI);
     chromeRequest.addHeader(SESSIONREQUEST_TIMESTAMP_HEADER, Long.toString(timestamp));
@@ -104,11 +104,11 @@ public class LocalSessionQueueInfoTest {
     assertEquals("MAC", platform.get(PLATFORM));
     assertEquals(1L, platform.get(COUNT));
 
-    List<Object> versions = (List<Object>) platform.get(VERSIONS);
+    List<Object> versions = (List<Object>) platform.get(BROWSER_VERSIONS);
     assertEquals(1, versions.size());
 
     Map<String, Object> version = (Map<String, Object>) versions.get(0);
-    assertEquals("87", version.get(VERSION));
+    assertEquals("87", version.get(BROWSER_VERSION));
     assertEquals(1L, version.get(COUNT));
   }
 
@@ -148,7 +148,7 @@ public class LocalSessionQueueInfoTest {
 
     ImmutableCapabilities capabilities = new ImmutableCapabilities(
       BROWSERNAME, CHROME,
-      VERSION, "87");
+      BROWSER_VERSION, "87");
     NewSessionPayload newSessionPayload = NewSessionPayload.create(capabilities);
     HttpRequest request = createRequest(newSessionPayload, POST, URI);
     request.addHeader(SESSIONREQUEST_TIMESTAMP_HEADER, Long.toString(timestamp));
@@ -201,11 +201,11 @@ public class LocalSessionQueueInfoTest {
 
     Map<String, Object> platform = (Map<String, Object>) platforms.get(0);
 
-    List<Object> versions = (List<Object>) platform.get(VERSIONS);
+    List<Object> versions = (List<Object>) platform.get(BROWSER_VERSIONS);
     assertEquals(1, versions.size());
 
     Map<String, Object> version = (Map<String, Object>) versions.get(0);
-    assertEquals("ANY", version.get(VERSION));
+    assertEquals("ANY", version.get(BROWSER_VERSION));
     assertEquals(1L, version.get(COUNT));
   }
 
@@ -222,7 +222,7 @@ public class LocalSessionQueueInfoTest {
     ImmutableCapabilities firefoxCaps = new ImmutableCapabilities(
       BROWSERNAME, "firefox",
       PLATFORM, "windows",
-      VERSION, "84");
+      BROWSER_VERSION, "84");
     NewSessionPayload firefoxPayload = NewSessionPayload.create(firefoxCaps);
     HttpRequest firefoxRequest = createRequest(firefoxPayload, POST, URI);
     firefoxRequest.addHeader(SESSIONREQUEST_TIMESTAMP_HEADER, Long.toString(timestamp));
@@ -255,7 +255,7 @@ public class LocalSessionQueueInfoTest {
     ImmutableCapabilities chromeMacCaps = new ImmutableCapabilities(
       BROWSERNAME, CHROME,
       PLATFORM, "mac",
-      VERSION, "87");
+      BROWSER_VERSION, "87");
     NewSessionPayload chromeMacPayload = NewSessionPayload.create(chromeMacCaps);
     HttpRequest chromeMacRequest = createRequest(chromeMacPayload, POST, URI);
     chromeMacRequest.addHeader(SESSIONREQUEST_TIMESTAMP_HEADER, Long.toString(timestamp));
@@ -264,7 +264,7 @@ public class LocalSessionQueueInfoTest {
     ImmutableCapabilities chromeWindowsCaps = new ImmutableCapabilities(
       BROWSERNAME, CHROME,
       PLATFORM, "windows",
-      VERSION, "87");
+      BROWSER_VERSION, "87");
     NewSessionPayload chromeWindowsPayload = NewSessionPayload.create(chromeWindowsCaps);
     HttpRequest chromeWindowsRequest = createRequest(chromeWindowsPayload, POST, URI);
     chromeWindowsRequest.addHeader(SESSIONREQUEST_TIMESTAMP_HEADER, Long.toString(timestamp));
@@ -310,7 +310,7 @@ public class LocalSessionQueueInfoTest {
     ImmutableCapabilities chrome87Caps = new ImmutableCapabilities(
       BROWSERNAME, CHROME,
       PLATFORM, "mac",
-      VERSION, "87");
+      BROWSER_VERSION, "87");
     NewSessionPayload chrome87Payload = NewSessionPayload.create(chrome87Caps);
     HttpRequest chrome87Request = createRequest(chrome87Payload, POST, URI);
     chrome87Request.addHeader(SESSIONREQUEST_TIMESTAMP_HEADER, Long.toString(timestamp));
@@ -319,7 +319,7 @@ public class LocalSessionQueueInfoTest {
     ImmutableCapabilities chrome85Caps = new ImmutableCapabilities(
       BROWSERNAME, CHROME,
       PLATFORM, "mac",
-      VERSION, "85");
+      BROWSER_VERSION, "85");
     NewSessionPayload chrome85Payload = NewSessionPayload.create(chrome85Caps);
     HttpRequest chrome85Request = createRequest(chrome85Payload, POST, URI);
     chrome85Request.addHeader(SESSIONREQUEST_TIMESTAMP_HEADER, Long.toString(timestamp));
@@ -345,19 +345,19 @@ public class LocalSessionQueueInfoTest {
     Map<String, Object> platform = platforms.get(0);
     assertEquals("MAC", platform.get(PLATFORM));
 
-    List<Map<String, Object>> versions = (List<Map<String, Object>>) platform.get(VERSIONS);
+    List<Map<String, Object>> versions = (List<Map<String, Object>>) platform.get(BROWSER_VERSIONS);
     assertEquals(2, versions.size());
 
     // HashMap ordering is not guaranteed
-    versions.sort(Comparator.comparing(map -> (String) map.get(VERSION),
+    versions.sort(Comparator.comparing(map -> (String) map.get(BROWSER_VERSION),
       Comparator.naturalOrder()));
 
     Map<String, Object> version85 = versions.get(0);
-    assertEquals("85", version85.get(VERSION));
+    assertEquals("85", version85.get(BROWSER_VERSION));
     assertEquals(3L, version85.get(COUNT));
 
     Map<String, Object> version87 = versions.get(1);
-    assertEquals("87", version87.get(VERSION));
+    assertEquals("87", version87.get(BROWSER_VERSION));
     assertEquals(2L, version87.get(COUNT));
   }
 

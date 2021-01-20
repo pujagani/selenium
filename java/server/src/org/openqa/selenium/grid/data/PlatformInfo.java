@@ -25,12 +25,12 @@ import static java.util.Collections.unmodifiableMap;
 public class PlatformInfo {
   private String platform;
   private Integer count;
-  private Map<String, VersionInfo> versionMap;
+  private Map<String, BrowserVersionInfo> browserVersionMap;
 
   public PlatformInfo(String platform) {
     this.platform = platform;
     this.count = 0;
-    this.versionMap = new HashMap<>();
+    this.browserVersionMap = new HashMap<>();
   }
 
   public String getPlatform() {
@@ -45,15 +45,15 @@ public class PlatformInfo {
     this.count = count;
   }
 
-  public Map<String, VersionInfo> getVersionMap() {
-    return versionMap;
+  public Map<String, BrowserVersionInfo> getBrowserVersionMap() {
+    return browserVersionMap;
   }
 
   private Map<String, Object> toJson() {
     Map<String, Object> toReturn = new HashMap<>();
     toReturn.put("platform", platform);
     toReturn.put("count", count);
-    toReturn.put("versions", versionMap.values());
+    toReturn.put("browserVersions", browserVersionMap.values());
     return unmodifiableMap(toReturn);
   }
 }

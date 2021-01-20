@@ -23,7 +23,7 @@ import org.openqa.selenium.Platform;
 import org.openqa.selenium.grid.data.BrowserInfo;
 import org.openqa.selenium.grid.data.PlatformInfo;
 import org.openqa.selenium.grid.data.RequestId;
-import org.openqa.selenium.grid.data.VersionInfo;
+import org.openqa.selenium.grid.data.BrowserVersionInfo;
 import org.openqa.selenium.internal.Require;
 
 import org.openqa.selenium.remote.CapabilityType;
@@ -104,10 +104,10 @@ public abstract class NewSessionQueue implements HasReadyState {
     platformMap.putIfAbsent(platform, platformInfo);
 
     // Set version count
-    Map<String, VersionInfo> versionMap = platformInfo.getVersionMap();
-    VersionInfo versionInfo = versionMap.getOrDefault(version, new VersionInfo(version));
-    versionInfo.setCount(versionInfo.getCount() + 1);
-    versionMap.putIfAbsent(version, versionInfo);
+    Map<String, BrowserVersionInfo> versionMap = platformInfo.getBrowserVersionMap();
+    BrowserVersionInfo browserVersionInfo = versionMap.getOrDefault(version, new BrowserVersionInfo(version));
+    browserVersionInfo.setCount(browserVersionInfo.getCount() + 1);
+    versionMap.putIfAbsent(version, browserVersionInfo);
   }
 
   protected NewSessionQueue(Tracer tracer, Duration retryInterval, Duration requestTimeout) {

@@ -22,17 +22,17 @@ import java.util.Map;
 
 import static java.util.Collections.unmodifiableMap;
 
-public class VersionInfo {
-  private String version;
+public class BrowserVersionInfo {
+  private String browserVersion;
   private Integer count;
 
-  public VersionInfo(String version) {
-    this.version = version;
+  public BrowserVersionInfo(String browserVersion) {
+    this.browserVersion = browserVersion;
     this.count = 0;
   }
 
-  public String getVersion() {
-    return version;
+  public String getBrowserVersion() {
+    return browserVersion;
   }
 
   public Integer getCount() {
@@ -45,7 +45,7 @@ public class VersionInfo {
 
   private Map<String, Object> toJson() {
     Map<String, Object> toReturn = new HashMap<>();
-    toReturn.put("version", version);
+    toReturn.put("browserVersion", browserVersion);
     toReturn.put("count", count);
     return unmodifiableMap(toReturn);
   }

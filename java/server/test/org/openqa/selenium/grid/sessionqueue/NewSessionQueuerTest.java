@@ -269,11 +269,11 @@ public class NewSessionQueuerTest {
     assertEquals("ANY", platform.get("platform"));
     assertEquals(1L, platform.get("count"));
 
-    List<Object> versions = (List<Object>) platform.get("versions");
+    List<Object> versions = (List<Object>) platform.get("browserVersions");
     assertEquals(1, versions.size());
 
     Map<String, Object> version = (Map<String, Object>) versions.get(0);
-    assertEquals("ANY", version.get("version"));
+    assertEquals("ANY", version.get("browserVersion"));
     assertEquals(1L, version.get("count"));
   }
 
@@ -297,11 +297,11 @@ public class NewSessionQueuerTest {
     assertEquals("ANY", platform.get("platform"));
     assertEquals(1L, platform.get("count"));
 
-    List<Object> versions = (List<Object>) platform.get("versions");
+    List<Object> versions = (List<Object>) platform.get("browserVersions");
     assertEquals(1, versions.size());
 
     Map<String, Object> version = (Map<String, Object>) versions.get(0);
-    assertEquals("ANY", version.get("version"));
+    assertEquals("ANY", version.get("browserVersion"));
     assertEquals(1L, version.get("count"));
   }
 
