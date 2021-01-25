@@ -8,8 +8,7 @@ MEDIUM_TESTS = [
 java_test_suite(
     name = "small-tests",
     size = "small",
-    srcs = glob(["*.java"],
-                exclude = MEDIUM_TESTS),
+    srcs = glob(["*.java"], exclude = MEDIUM_TESTS),
     javacopts = [
         "--release",
         "11",
