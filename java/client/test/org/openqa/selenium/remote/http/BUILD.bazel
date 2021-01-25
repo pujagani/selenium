@@ -8,7 +8,10 @@ MEDIUM_TESTS = [
 java_test_suite(
     name = "small-tests",
     size = "small",
-    srcs = glob(["*.java"], exclude = MEDIUM_TESTS),
+    srcs = glob(
+        ["*.java"],
+        exclude = MEDIUM_TESTS,
+    ),
     javacopts = [
         "--release",
         "11",
@@ -29,8 +32,8 @@ java_test_suite(
     size = "medium",
     srcs = MEDIUM_TESTS,
     javacopts = [
-            "--release",
-            "11",
+        "--release",
+        "11",
     ],
     deps = [
         "//java/client/src/org/openqa/selenium:core",
@@ -40,5 +43,5 @@ java_test_suite(
         artifact("org.assertj:assertj-core"),
         artifact("com.google.guava:guava"),
         artifact("junit:junit"),
-       ],
+    ],
 )
