@@ -121,25 +121,72 @@ class Node extends React.Component<NodeProps, NodeState> {
     function CreateStereotypeGridItem(slotStereotype: StereotypeInfo, index: any) {
       return (
         <Grid container item alignItems='center' spacing={1} key={index}>
-          <Grid item>
+          <Grid item className={classes.stereotypeItem}>
             <img
               src={browserLogo(slotStereotype.browserName)}
               className={classes.browserLogo}
               alt="Browser Logo"
             />
           </Grid>
-          <Grid item>
+          <Grid item className={classes.stereotypeItem}>
             <Typography className={classes.slotInfo}>
               {slotStereotype.slotCount}
             </Typography>
           </Grid>
-          <Grid item>
+          <Grid item className={classes.stereotypeItem}>
             <Typography className={classes.slotInfo}>
               {slotStereotype.browserVersion}
             </Typography>
           </Grid>
         </Grid>
       );
+    }
+
+    function CreateStereotypeEmptyItem(index: any) {
+      return (
+        <Grid container item alignItems='center' spacing={1} key={index}>
+          <Grid item className={classes.stereotypeItem}>
+          </Grid>
+          <Grid item className={classes.stereotypeItem}> 
+          </Grid>
+          <Grid item className={classes.stereotypeItem}>
+          </Grid>
+        </Grid>
+      );
+    }
+
+    function CreateStereoTypeGrid(index: any) {
+      let stereotypeList: StereotypeInfo[] = nodeInfo.slotStereotypes;
+      let emptyStereotype = {
+        browserName: "",
+        browserVersion: "",
+        slotCount: 0,
+        rawData: "any"
+      };
+
+      stereotypeList = stereotypeList
+        .sort((a, b) => a.browserName.localeCompare(b.browserName)
+          || a.browserVersion.localeCompare(b.browserVersion));
+
+      if (stereotypeList.length < 3) {
+        stereotypeList = stereotypeList.concat(Array.apply(null, Array(3 - stereotypeList.length)).map(() => {
+          return emptyStereotype;
+        }));
+
+      }
+      return <Grid item xs={columnWidth} key={index}>
+        {
+          stereotypeList.slice(index * 3, Math.min((index * 3) + 3, stereotypeList.length))
+            .map((slotStereotype: StereotypeInfo, idx) => {
+              if (slotStereotype != emptyStereotype) {
+                return (
+                  CreateStereotypeGridItem(slotStereotype, idx))
+              } else {
+                return CreateStereotypeEmptyItem(idx)
+              }
+            })
+        }
+      </Grid>
     }
 
     return (
@@ -238,20 +285,7 @@ class Node extends React.Component<NodeProps, NodeState> {
               >
                 {
                   Array.from(Array(stereotypeColumns).keys()).map((index) => {
-                    return (
-                      <Grid item xs={columnWidth} key={index}>
-                        {
-                          nodeInfo.slotStereotypes
-                            .sort((a, b) => a.browserName.localeCompare(b.browserName)
-                                            || a.browserVersion.localeCompare(b.browserVersion))
-                            .slice(index * 3, Math.min((index * 3) + 3, nodeInfo.slotStereotypes.length))
-                            .map((slotStereotype: any, idx) => {
-                              return (
-                                CreateStereotypeGridItem(slotStereotype, idx)
-                              )
-                            })}
-                      </Grid>
-                    )
+                    return CreateStereoTypeGrid(index);
                   })
                 }
               </Grid>
