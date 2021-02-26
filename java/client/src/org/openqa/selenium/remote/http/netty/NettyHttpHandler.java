@@ -18,6 +18,8 @@
 package org.openqa.selenium.remote.http.netty;
 
 import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.RequestBuilder;
 import org.asynchttpclient.Response;
 import org.openqa.selenium.internal.Require;
 import org.openqa.selenium.remote.http.ClientConfig;
@@ -28,7 +30,11 @@ import org.openqa.selenium.remote.http.RemoteCall;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -49,14 +55,10 @@ public class NettyHttpHandler extends RemoteCall {
     return handler.execute(request);
   }
 
-  private HttpResponse makeCall(HttpRequest request) {
+  private HttpResponse makeCall(HttpRequest request)  {
     Require.nonNull("Request", request);
-
-    Future<Response> whenResponse = client.executeRequest(
-      NettyMessages.toNettyRequest(getConfig().baseUri(), request));
-
     try {
-      Response response = whenResponse.get(getConfig().readTimeout().toMillis(), TimeUnit.MILLISECONDS);
+      Response response = get(request).get(400000, TimeUnit.SECONDS);
       return NettyMessages.toSeleniumResponse(response);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -76,4 +78,22 @@ public class NettyHttpHandler extends RemoteCall {
       throw new RuntimeException("NettyHttpHandler request execution error", e);
     }
   }
+
+  public CompletableFuture<Response> get(HttpRequest request) {
+    final CompletableFuture<Response> returnFuture = new CompletableFuture<>();
+    ListenableFuture<Response> listenableFuture = client.executeRequest(
+      NettyMessages.toNettyRequest(getConfig().baseUri(), request));
+
+    listenableFuture.addListener(() -> {
+      Response response;
+      try {
+        response = listenableFuture.get();
+        returnFuture.complete(response);
+      } catch (ExecutionException | InterruptedException e) {
+        returnFuture.completeExceptionally(e);
+      }
+    }, null);
+    return returnFuture;
+  }
+
 }

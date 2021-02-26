@@ -39,20 +39,31 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 
 public class NettyClient implements HttpClient {
-  private static final Timer TIMER;
-  static {
-    ThreadFactory threadFactory = new DefaultThreadFactory("netty-client-timer", true);
-    HashedWheelTimer timer = new HashedWheelTimer(
-      threadFactory,
-      AsyncHttpClientConfigDefaults.defaultHashedWheelTimerTickDuration(),
-      TimeUnit.MILLISECONDS,
-      AsyncHttpClientConfigDefaults.defaultHashedWheelTimerSize());
-    timer.start();
-    TIMER = timer;
-  }
+  private static final AsyncHttpClient httpClient = Dsl.asyncHttpClient(new DefaultAsyncHttpClientConfig.Builder()
+    .setThreadFactory(new DefaultThreadFactory("AsyncHttpClient", true))
+    .setUseInsecureTrustManager(true)
+    .setAggregateWebSocketFrameFragments(true)
+    .setWebSocketMaxBufferSize(Integer.MAX_VALUE)
+    .setWebSocketMaxFrameSize(Integer.MAX_VALUE)
+    .setRequestTimeout(1800000)
+    .setConnectTimeout(1800000)
+    .setReadTimeout(1800000));
+
+//  private static final Timer TIMER;
+//  static {
+//    ThreadFactory threadFactory = new DefaultThreadFactory("netty-client-timer", true);
+//    HashedWheelTimer timer = new HashedWheelTimer(
+//      threadFactory,
+//      AsyncHttpClientConfigDefaults.defaultHashedWheelTimerTickDuration(),
+//      TimeUnit.MILLISECONDS,
+//      AsyncHttpClientConfigDefaults.defaultHashedWheelTimerSize());
+//    timer.start();
+//    TIMER = timer;
+//  }
   private final ClientConfig config;
   private final AsyncHttpClient client;
   private final HttpHandler handler;
@@ -60,7 +71,7 @@ public class NettyClient implements HttpClient {
 
   private NettyClient(ClientConfig config) {
     this.config = Require.nonNull("HTTP client config", config);
-    this.client = createHttpClient(config);
+    this.client = httpClient;
     this.handler = new NettyHttpHandler(config, this.client).with(config.filter());
     this.toWebSocket = NettyWebSocket.create(config, this.client);
   }
@@ -73,7 +84,7 @@ public class NettyClient implements HttpClient {
         .setAggregateWebSocketFrameFragments(true)
         .setWebSocketMaxBufferSize(Integer.MAX_VALUE)
         .setWebSocketMaxFrameSize(Integer.MAX_VALUE)
-        .setNettyTimer(TIMER)
+       // .setNettyTimer(TIMER)
         .setRequestTimeout(toClampedInt(config.readTimeout().toMillis()))
         .setConnectTimeout(toClampedInt(config.connectionTimeout().toMillis()))
         .setReadTimeout(toClampedInt(config.readTimeout().toMillis()));
@@ -112,16 +123,31 @@ public class NettyClient implements HttpClient {
 
   @Override
   public void close() {
-    try {
-      client.close();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+//    try {
+//      client.close();
+//    } catch (IOException e) {
+//      throw new UncheckedIOException(e);
+//    }
   }
 
   @AutoService(HttpClient.Factory.class)
   @HttpClientName("netty")
   public static class Factory implements HttpClient.Factory {
+
+    private static final AtomicBoolean addedHook = new AtomicBoolean();
+
+    public Factory() {
+      if (!addedHook.get()) {
+        Runtime.getRuntime().addShutdownHook(new Thread(this::callAsyncClientShutdown));
+        addedHook.set(true);
+      }
+    }
+    private void callAsyncClientShutdown() {
+      try {
+        httpClient.close();
+      } catch (IOException ignore) {
+      }
+    }
 
     @Override
     public HttpClient createClient(ClientConfig config) {
