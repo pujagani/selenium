@@ -83,6 +83,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -121,7 +122,7 @@ public class LocalDistributor extends Distributor implements Closeable {
   private final GridModel model;
   private final Map<NodeId, Node> nodes;
 
-  private final Executor sessionCreatorExecutor = Executors.newFixedThreadPool(
+  private final ExecutorService sessionCreatorExecutor = Executors.newFixedThreadPool(
     Runtime.getRuntime().availableProcessors(),
     r -> {
       Thread thread = new Thread(r);
@@ -288,7 +289,8 @@ public class LocalDistributor extends Distributor implements Closeable {
       try {
         LOG.log(
           getDebugLogLevel(),
-          String.format("Health check result for %s was %s", node.getId(), result.getAvailability()));
+          String
+            .format("Health check result for %s was %s", node.getId(), result.getAvailability()));
         model.setAvailability(id, result.getAvailability());
       } finally {
         writeLock.unlock();
@@ -369,7 +371,8 @@ public class LocalDistributor extends Distributor implements Closeable {
   }
 
   @Override
-  public Either<SessionNotCreatedException, CreateSessionResponse> newSession(SessionRequest request)
+  public Either<SessionNotCreatedException, CreateSessionResponse> newSession(
+    SessionRequest request)
     throws SessionNotCreatedException {
     Require.nonNull("Requests to process", request);
 
@@ -377,12 +380,14 @@ public class LocalDistributor extends Distributor implements Closeable {
     Map<String, EventAttributeValue> attributeMap = new HashMap<>();
     try {
       attributeMap.put(AttributeKey.LOGGER_CLASS.getKey(),
-        EventAttribute.setValue(getClass().getName()));
+                       EventAttribute.setValue(getClass().getName()));
 
-      attributeMap.put("request.payload", EventAttribute.setValue(request.getDesiredCapabilities().toString()));
+      attributeMap.put("request.payload",
+                       EventAttribute.setValue(request.getDesiredCapabilities().toString()));
       String sessionReceivedMessage = "Session request received by the distributor";
       span.addEvent(sessionReceivedMessage, attributeMap);
-      LOG.info(String.format("%s: \n %s", sessionReceivedMessage, request.getDesiredCapabilities()));
+      LOG
+        .info(String.format("%s: \n %s", sessionReceivedMessage, request.getDesiredCapabilities()));
 
       // If there are no capabilities at all, something is horribly wrong
       if (request.getDesiredCapabilities().isEmpty()) {
@@ -390,14 +395,17 @@ public class LocalDistributor extends Distributor implements Closeable {
           new SessionNotCreatedException("No capabilities found in session request payload");
         EXCEPTION.accept(attributeMap, exception);
         attributeMap.put(AttributeKey.EXCEPTION_MESSAGE.getKey(),
-          EventAttribute.setValue("Unable to create session. No capabilities found: " +
-            exception.getMessage()));
+                         EventAttribute
+                           .setValue("Unable to create session. No capabilities found: " +
+                                     exception.getMessage()));
         span.addEvent(AttributeKey.EXCEPTION_EVENT.getKey(), attributeMap);
         return Either.left(exception);
       }
 
       boolean retry = false;
-      SessionNotCreatedException lastFailure = new SessionNotCreatedException("Unable to create new session");
+      SessionNotCreatedException
+        lastFailure =
+        new SessionNotCreatedException("Unable to create new session");
       for (Capabilities caps : request.getDesiredCapabilities()) {
         if (!isSupported(caps)) {
           continue;
@@ -411,7 +419,8 @@ public class LocalDistributor extends Distributor implements Closeable {
         // in this next block of code.
         SlotId selectedSlot = reserveSlot(request.getRequestId(), caps);
         if (selectedSlot == null) {
-          LOG.info(String.format("Unable to find slot for request %s. May retry: %s ", request.getRequestId(), caps));
+          LOG.info(String.format("Unable to find slot for request %s. May retry: %s ",
+                                 request.getRequestId(), caps));
           retry = true;
           continue;
         }
@@ -424,7 +433,6 @@ public class LocalDistributor extends Distributor implements Closeable {
         try {
           CreateSessionResponse response = startSession(selectedSlot, singleRequest);
           sessions.add(response.getSession());
-          model.setSession(selectedSlot, response.getSession());
 
           SessionId sessionId = response.getSession().getId();
           Capabilities sessionCaps = response.getSession().getCapabilities();
@@ -438,11 +446,11 @@ public class LocalDistributor extends Distributor implements Closeable {
 
           String sessionCreatedMessage = "Session created by the distributor";
           span.addEvent(sessionCreatedMessage, attributeMap);
-          LOG.info(String.format("%s. Id: %s, Caps: %s", sessionCreatedMessage, sessionId, sessionCaps));
+          LOG.info(
+            String.format("%s. Id: %s, Caps: %s", sessionCreatedMessage, sessionId, sessionCaps));
 
           return Either.right(response);
         } catch (SessionNotCreatedException e) {
-          model.setSession(selectedSlot, null);
           lastFailure = e;
         }
       }
@@ -458,7 +466,8 @@ public class LocalDistributor extends Distributor implements Closeable {
       } else {
         EXCEPTION.accept(attributeMap, lastFailure);
         attributeMap.put(AttributeKey.EXCEPTION_MESSAGE.getKey(),
-          EventAttribute.setValue("Unable to create session: " + lastFailure.getMessage()));
+                         EventAttribute
+                           .setValue("Unable to create session: " + lastFailure.getMessage()));
         span.addEvent(AttributeKey.EXCEPTION_EVENT.getKey(), attributeMap);
       }
       return Either.left(lastFailure);
@@ -468,7 +477,7 @@ public class LocalDistributor extends Distributor implements Closeable {
 
       EXCEPTION.accept(attributeMap, e);
       attributeMap.put(AttributeKey.EXCEPTION_MESSAGE.getKey(),
-        EventAttribute.setValue("Unable to create session: " + e.getMessage()));
+                       EventAttribute.setValue("Unable to create session: " + e.getMessage()));
       span.addEvent(AttributeKey.EXCEPTION_EVENT.getKey(), attributeMap);
 
       return Either.left(e);
@@ -478,7 +487,9 @@ public class LocalDistributor extends Distributor implements Closeable {
 
       EXCEPTION.accept(attributeMap, e);
       attributeMap.put(AttributeKey.EXCEPTION_MESSAGE.getKey(),
-        EventAttribute.setValue("Unknown error in LocalDistributor while creating session: " + e.getMessage()));
+                       EventAttribute.setValue(
+                         "Unknown error in LocalDistributor while creating session: " + e
+                           .getMessage()));
       span.addEvent(AttributeKey.EXCEPTION_EVENT.getKey(), attributeMap);
 
       return Either.left(new SessionNotCreatedException(e.getMessage(), e));
@@ -487,28 +498,36 @@ public class LocalDistributor extends Distributor implements Closeable {
     }
   }
 
-  private CreateSessionResponse startSession(SlotId selectedSlot, CreateSessionRequest singleRequest) {
+  private CreateSessionResponse startSession(SlotId selectedSlot,
+                                             CreateSessionRequest singleRequest) {
     Node node = nodes.get(selectedSlot.getOwningNodeId());
     if (node == null) {
       throw new SessionNotCreatedException("Unable to find owning node for slot");
     }
 
     Either<WebDriverException, CreateSessionResponse> result;
+    Lock writeLock = lock.writeLock();
+    writeLock.lock();
     try {
       result = node.newSession(singleRequest);
     } catch (SessionNotCreatedException e) {
       result = Either.left(e);
     } catch (RuntimeException e) {
       result = Either.left(new SessionNotCreatedException(e.getMessage(), e));
+    } finally {
+      writeLock.unlock();
     }
+
     if (result.isLeft()) {
       WebDriverException exception = result.left();
+      model.setSession(selectedSlot, null);
       if (exception instanceof SessionNotCreatedException) {
         throw exception;
       }
       throw new SessionNotCreatedException(exception.getMessage(), exception);
+    } else {
+      model.setSession(selectedSlot, result.right().getSession());
     }
-
     return result.right();
   }
 
@@ -542,20 +561,13 @@ public class LocalDistributor extends Distributor implements Closeable {
 
   private boolean reserve(SlotId id) {
     Require.nonNull("Slot ID", id);
-
-    Lock writeLock = this.lock.writeLock();
-    writeLock.lock();
-    try {
-      Node node = nodes.get(id.getOwningNodeId());
-      if (node == null) {
-        LOG.log(getDebugLogLevel(), String.format("Unable to find node with id %s", id));
-        return false;
-      }
-
-      return model.reserve(id);
-    } finally {
-      writeLock.unlock();
+    Node node = nodes.get(id.getOwningNodeId());
+    if (node == null) {
+      LOG.log(getDebugLogLevel(), String.format("Unable to find node with id %s", id));
+      return false;
     }
+
+    return model.reserve(id);
   }
 
   @Override
@@ -564,6 +576,7 @@ public class LocalDistributor extends Distributor implements Closeable {
     purgeDeadNodes.shutdown();
     hostChecker.shutdown();
     createNewSession.shutdown();
+    sessionCreatorExecutor.shutdown();
   }
 
   private class NewSessionRunnable implements Runnable {
@@ -588,6 +601,7 @@ public class LocalDistributor extends Distributor implements Closeable {
                 .map(
                     node ->
                         node.getSlots().stream()
+                          .filter(slot -> slot.getSession() == null)
                             .map(Slot::getStereotype)
                             .collect(Collectors.toSet()))
                 .flatMap(Collection::stream)

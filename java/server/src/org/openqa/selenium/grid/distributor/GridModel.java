@@ -183,39 +183,39 @@ public class GridModel {
   }
 
   public void purgeDeadNodes() {
-    Lock writeLock = lock.writeLock();
-    writeLock.lock();
-    try {
-      Map<NodeStatus, NodeStatus> replacements = new HashMap<>();
-      Set<NodeStatus> toRemove = new HashSet<>();
-
-      for (NodeStatus node : nodes) {
-        Instant now = Instant.now();
-        Instant lastTouched = nodePurgeTimes.getOrDefault(node.getNodeId(), Instant.now());
-        Instant lostTime = lastTouched.plus(node.getHeartbeatPeriod().multipliedBy(PURGE_TIMEOUT_MULTIPLIER / 2));
-        Instant deadTime = lastTouched.plus(node.getHeartbeatPeriod().multipliedBy(PURGE_TIMEOUT_MULTIPLIER));
-
-        if (node.getAvailability() == UP && lostTime.isBefore(now)) {
-          LOG.info(String.format("Switching node %s from UP to DOWN", node.getNodeId()));
-          replacements.put(node, rewrite(node, DOWN));
-        }
-        if (node.getAvailability() == DOWN && deadTime.isBefore(now)) {
-          LOG.info(String.format("Removing node %s that is DOWN for too long", node.getNodeId()));
-          toRemove.add(node);
-        }
-      }
-
-      replacements.forEach((before, after) -> {
-        nodes.remove(before);
-        nodes.add(after);
-      });
-      toRemove.forEach(node -> {
-        nodes.remove(node);
-        nodePurgeTimes.remove(node.getNodeId());
-      });
-    } finally {
-      writeLock.unlock();
-    }
+//    Lock writeLock = lock.writeLock();
+//    writeLock.lock();
+//    try {
+//      Map<NodeStatus, NodeStatus> replacements = new HashMap<>();
+//      Set<NodeStatus> toRemove = new HashSet<>();
+//
+//      for (NodeStatus node : nodes) {
+//        Instant now = Instant.now();
+//        Instant lastTouched = nodePurgeTimes.getOrDefault(node.getNodeId(), Instant.now());
+//        Instant lostTime = lastTouched.plus(node.getHeartbeatPeriod().multipliedBy(PURGE_TIMEOUT_MULTIPLIER / 2));
+//        Instant deadTime = lastTouched.plus(node.getHeartbeatPeriod().multipliedBy(PURGE_TIMEOUT_MULTIPLIER));
+//
+//        if (node.getAvailability() == UP && lostTime.isBefore(now)) {
+//          LOG.info(String.format("Switching node %s from UP to DOWN", node.getNodeId()));
+//          replacements.put(node, rewrite(node, DOWN));
+//        }
+//        if (node.getAvailability() == DOWN && deadTime.isBefore(now)) {
+//          LOG.info(String.format("Removing node %s that is DOWN for too long", node.getNodeId()));
+//          toRemove.add(node);
+//        }
+//      }
+//
+//      replacements.forEach((before, after) -> {
+//        nodes.remove(before);
+//        nodes.add(after);
+//      });
+//      toRemove.forEach(node -> {
+//        nodes.remove(node);
+//        nodePurgeTimes.remove(node.getNodeId());
+//      });
+//    } finally {
+//      writeLock.unlock();
+//    }
   }
 
   public Availability setAvailability(NodeId id, Availability availability) {

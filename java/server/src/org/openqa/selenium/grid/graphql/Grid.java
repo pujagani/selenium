@@ -39,7 +39,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Grid {
-
   private static final Json JSON = new Json();
   private final URI uri;
   private final DistributorStatus distributorStatus;
@@ -118,6 +117,7 @@ public class Grid {
       .map(NodeStatus::getSlots)
       .flatMap(Collection::stream)
       .filter(slot -> slot.getSession()!=null)
+      .filter(slot -> !slot.getSession().getId().toString().equals("reserved"))
       .mapToInt(slot -> 1)
       .sum();
   }
@@ -150,7 +150,7 @@ public class Grid {
     List<Session> sessions = new ArrayList<>();
     for (NodeStatus status : distributorStatus.getNodes()) {
       for (Slot slot : status.getSlots()) {
-        if (slot.getSession()!=null) {
+        if (slot.getSession()!=null && !slot.getSession().getId().toString().equals("reserved")) {
           org.openqa.selenium.grid.data.Session session = slot.getSession();
           sessions.add(
             new org.openqa.selenium.grid.graphql.Session(
