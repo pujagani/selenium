@@ -35,9 +35,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\webdriver\WebDriver.csproj" />
-    <ProjectReference Include="..\..\src\support\WebDriver.Support.csproj" />
-    <ProjectReference Include="..\common\WebDriver.Common.Tests.csproj" />
+    <ProjectReference Include="/Users/Puja/Documents/GitHub/selenium/dotnet/src/webdriver/WebDriver.csproj" />
+    <ProjectReference Include="/Users/Puja/Documents/GitHub/selenium/dotnet/src/support/WebDriver.Support.csproj" />
+    <ProjectReference Include="/Users/Puja/Documents/GitHub/selenium/dotnet/test/common/WebDriver.Common.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

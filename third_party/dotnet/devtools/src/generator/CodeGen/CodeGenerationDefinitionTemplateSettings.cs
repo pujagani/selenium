@@ -12,37 +12,37 @@
             //Set Defaults;
             DomainTemplate = new CodeGenerationTemplateSettings
             {
-                TemplatePath = "domain.hbs",
-                OutputPath = "{{domainName}}\\{{className}}Adapter.cs",
+                TemplatePath = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/domain.hbs",
+                OutputPath = "{{domainName}}//{{className}}Adapter.cs",
             };
 
             CommandTemplate = new CodeGenerationTemplateSettings {
-                TemplatePath = "command.hbs",
-                OutputPath = "{{domainName}}\\{{className}}Command.cs",
+                TemplatePath = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/command.hbs",
+                OutputPath = "{{domainName}}//{{className}}Command.cs",
             };
 
             EventTemplate = new CodeGenerationTemplateSettings
             {
-                TemplatePath = "event.hbs",
-                OutputPath = "{{domainName}}\\{{className}}EventArgs.cs",
+                TemplatePath = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/event.hbs",
+                OutputPath = "{{domainName}}//{{className}}EventArgs.cs",
             };
 
             TypeObjectTemplate = new CodeGenerationTemplateSettings
             {
-                TemplatePath = "type-object.hbs",
-                OutputPath = "{{domainName}}\\{{className}}.cs",
+                TemplatePath = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/type-object.hbs",
+                OutputPath = "{{domainName}}//{{className}}.cs",
             };
 
             TypeHashTemplate = new CodeGenerationTemplateSettings
             {
-                TemplatePath = "type-hash.hbs",
-                OutputPath = "{{domainName}}\\{{className}}.cs",
+                TemplatePath = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/type-hash.hbs",
+                OutputPath = "{{domainName}}//{{className}}.cs",
             };
 
             TypeEnumTemplate = new CodeGenerationTemplateSettings
             {
-                TemplatePath = "type-enum.hbs",
-                OutputPath = "{{domainName}}\\{{className}}.cs",
+                TemplatePath = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/type-enum.hbs",
+                OutputPath = "{{domainName}}//{{className}}.cs",
             };
         }
 

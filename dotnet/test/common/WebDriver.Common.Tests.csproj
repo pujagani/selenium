@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\webdriver\WebDriver.csproj" />
+    <ProjectReference Include="/Users/Puja/Documents/GitHub/selenium/dotnet/src/webdriver/WebDriver.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -59,7 +59,7 @@
   </Target>
 
   <Target Name="PreBuildNonWindows" BeforeTargets="PreBuildEvent" Condition="'$(OS)' != 'Windows_NT'">
-    <Exec Command="$(ProjectDir)WebDriver.Common.Tests.csproj.prebuild.sh $(ProjectDir)" />
+    <Exec Command="chmod +x $(ProjectDir)WebDriver.Common.Tests.csproj.prebuild.sh $(ProjectDir)" />
   </Target>
 
 </Project>

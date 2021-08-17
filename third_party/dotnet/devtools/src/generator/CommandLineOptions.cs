@@ -27,42 +27,42 @@ namespace OpenQA.Selenium.DevToolsGenerator
 
         [Option(
             "force",
-            Default = false,
+            Default = true,
             HelpText = "Forces the output directory to be overwritten")]
         public bool ForceOverwrite { get; set; }
 
         [Option(
             'o',
             "output-path",
-            Default = "./OutputProtocol",
+            Default = "/Users/Puja/Documents/GitHub/selenium/bazel-bin/dotnet/src/webdriver/cdp/OutputProtocol/",
             HelpText ="Indicates the folder that will contain the generated class library [Default: ./OutputProtocol]")]
         public string OutputPath { get; set; }
 
         [Option(
             'b',
             "browser-protocol-path",
-            Default = "./browser_protocol.json",
+            Default = "/Users/Puja/Documents/GitHub/selenium/common/devtools/browser_protocol.json",
             HelpText = "Indicates the path to the Chromium Debugging Browser Protocol JSON file to use. [Default: browser_protocol.json]")]
         public string BrowserProtocolPath { get; set; }
 
         [Option(
             'j',
             "js-protocol-path",
-            Default = "./js_protocol.json",
+            Default = "/Users/Puja/Documents/GitHub/selenium/common/devtools/js_protocol.json",
             HelpText = "Indicates the path to the Chromium Debugging JavaScript Protocol JSON file to use. [Default: js_protocol.json]")]
         public string JavaScriptProtocolPath { get; set; }
 
         [Option(
             't',
             "templates-path",
-            Default = "",
+            Default = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/",
             HelpText = "Indicates the path to the code generation templates file.")]
         public string TemplatesPath { get; set; }
 
         [Option(
             's',
             "settings",
-            Default = "./Templates/settings.json",
+            Default = "/Users/Puja/Documents/GitHub/selenium/third_party/dotnet/devtools/src/generator/Templates/settings.json",
             HelpText = "Indicates the path to the code generation settings file. [Default: ./Templates/settings.json]")]
         public string Settings { get; set; }
     }

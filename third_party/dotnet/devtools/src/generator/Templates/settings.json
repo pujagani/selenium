@@ -1,7 +1,7 @@
 {
   "include": [
     {
-      "templatePath": "DevToolsSessionDomains.hbs",
+      "templatePath": "/Users/Puja/Documents/Github/selenium/third_party/dotnet/devtools/src/generator/Templates/DevToolsSessionDomains.hbs",
       "outputPath": "DevToolsSessionDomains.cs"
     }
   ],

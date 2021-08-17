@@ -84,7 +84,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\webdriver\WebDriver.csproj" />
+    <ProjectReference Include="../webdriver/WebDriver.csproj" />
   </ItemGroup>
 
 </Project>
