@@ -35,7 +35,7 @@ class WebSocketMessageHandler extends SimpleChannelInboundHandler<Message> {
   }
 
   @Override
-  protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
+  protected void messageReceived(ChannelHandlerContext ctx, Message msg) {
     if (!(ctx.channel().hasAttr(key))) {
       return;
     }

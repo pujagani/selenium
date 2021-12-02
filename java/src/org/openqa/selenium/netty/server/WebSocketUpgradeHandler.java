@@ -47,8 +47,8 @@ import java.util.function.Consumer;
 
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
-import static io.netty.handler.codec.http.HttpUtil.setContentLength;
+import static io.netty.handler.codec.http.HttpHeaderUtil.isKeepAlive;
+import static io.netty.handler.codec.http.HttpHeaderUtil.setContentLength;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -121,7 +121,7 @@ class WebSocketUpgradeHandler extends ChannelInboundHandlerAdapter {
     }
 
     // Only handle the initial HTTP upgrade request
-    if (!(req.headers().containsValue("Connection", "upgrade", true) &&
+    if (!(req.headers().contains("Connection", "upgrade", true) &&
           req.headers().contains("Sec-WebSocket-Version"))) {
       ctx.fireChannelRead(req);
       return;

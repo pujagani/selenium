@@ -20,7 +20,6 @@ package org.openqa.selenium.netty.server;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -59,7 +58,7 @@ class SeleniumHttpInitializer extends ChannelInitializer<SocketChannel> {
       ch.pipeline().addLast("ssl", sslCtx.newHandler(ch.alloc()));
     }
     ch.pipeline().addLast("codec", new HttpServerCodec());
-    ch.pipeline().addLast("keep-alive", new HttpServerKeepAliveHandler());
+   //  ch.pipeline().addLast("keep-alive", new HttpServerKeepAliveHandler());
     ch.pipeline().addLast("chunked-write", new ChunkedWriteHandler());
 
     // Websocket magic

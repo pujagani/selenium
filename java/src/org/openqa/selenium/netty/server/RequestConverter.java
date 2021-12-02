@@ -26,7 +26,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpUtil;
+import io.netty.handler.codec.http.HttpHeaderUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
@@ -55,7 +55,7 @@ class RequestConverter extends SimpleChannelInboundHandler<HttpObject> {
   private volatile PipedOutputStream out;
 
   @Override
-  protected void channelRead0(
+  protected void messageReceived(
     ChannelHandlerContext ctx,
     HttpObject msg) throws Exception {
     LOG.fine("Incoming message: " + msg);
@@ -66,7 +66,7 @@ class RequestConverter extends SimpleChannelInboundHandler<HttpObject> {
       io.netty.handler.codec.http.HttpRequest nettyRequest =
         (io.netty.handler.codec.http.HttpRequest) msg;
 
-      if (HttpUtil.is100ContinueExpected(nettyRequest)) {
+      if (HttpHeaderUtil.is100ContinueExpected(nettyRequest)) {
         ctx.write(new HttpResponse().setStatus(100));
         return;
       }
@@ -131,7 +131,7 @@ class RequestConverter extends SimpleChannelInboundHandler<HttpObject> {
       method = HttpMethod.GET;
     } else {
       try {
-        method = HttpMethod.valueOf(nettyRequest.method().name());
+        method = HttpMethod.valueOf(nettyRequest.method().name().toString());
       } catch (IllegalArgumentException e) {
         ctx.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.METHOD_NOT_ALLOWED));
         return null;
@@ -148,7 +148,7 @@ class RequestConverter extends SimpleChannelInboundHandler<HttpObject> {
 
     nettyRequest.headers().entries().stream()
       .filter(entry -> entry.getKey() != null)
-      .forEach(entry -> req.addHeader(entry.getKey(), entry.getValue()));
+      .forEach(entry -> req.addHeader(entry.getKey().toString(), entry.getValue().toString()));
 
     return req;
   }

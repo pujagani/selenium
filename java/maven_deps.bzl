@@ -2,7 +2,7 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@rules_jvm_external//:specs.bzl", "maven")
 
 def selenium_java_deps():
-    netty_version = "4.1.70.Final"
+    netty_version = "5.0.0.Alpha2"
     opentelemetry_version = "1.9.1"
 
     maven_install(
@@ -33,9 +33,39 @@ def selenium_java_deps():
             "io.netty:netty-handler:%s" % netty_version,
             "io.netty:netty-handler-proxy:%s" % netty_version,
             "io.netty:netty-transport:%s" % netty_version,
-            "io.netty:netty-transport-classes-epoll:%s" % netty_version,
-            "io.netty:netty-transport-classes-kqueue:%s" % netty_version,
-            "io.netty:netty-transport-native-unix-common:%s" % netty_version,
+             maven.artifact(
+                group = "io.netty",
+                artifact = "netty-transport-classes-epoll",
+                version = "4.1.70.Final",
+                exclusions = [
+                    "io.netty:netty-buffer",
+                    "io.netty:netty-transport",
+                    "io.netty:netty-common",
+                    "io.netty:netty-transport-native-unix-common"
+                ],
+            ),
+            maven.artifact(
+                group = "io.netty",
+                artifact = "netty-transport-classes-kqueue",
+                version = "4.1.70.Final",
+                exclusions = [
+                    "io.netty:netty-buffer",
+                    "io.netty:netty-transport",
+                    "io.netty:netty-common",
+                    "io.netty:netty-transport-native-unix-common"
+                ],
+            ),
+            maven.artifact(
+                group = "io.netty",
+                artifact = "netty-transport-native-unix-common",
+                version = "4.1.70.Final",
+                exclusions = [
+                    "io.netty:netty-buffer",
+                    "io.netty:netty-transport",
+                    "io.netty:netty-common",
+                    "io.netty:netty-transport-classes-kqueue"
+                ],
+            ),
             "io.opentelemetry:opentelemetry-api:%s" % opentelemetry_version,
             "io.opentelemetry:opentelemetry-context:%s" % opentelemetry_version,
             "io.opentelemetry:opentelemetry-exporter-logging:%s" % opentelemetry_version,

@@ -37,7 +37,7 @@ class MessageInboundConverter extends SimpleChannelInboundHandler<WebSocketFrame
   private static final Logger LOG = Logger.getLogger(MessageInboundConverter.class.getName());
 
   @Override
-  protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) {
+  protected void messageReceived(ChannelHandlerContext ctx, WebSocketFrame frame) {
     if (!frame.isFinalFragment()) {
       LOG.warning("Frame is not final. Chaos may ensue");
     }

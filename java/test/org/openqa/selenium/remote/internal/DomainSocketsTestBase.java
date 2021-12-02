@@ -43,7 +43,6 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
 import io.netty.handler.codec.http.HttpVersion;
 import org.junit.After;
 import org.junit.Before;
@@ -104,16 +103,17 @@ public abstract class DomainSocketsTestBase {
         protected void initChannel(DomainSocketChannel ch) {
           ch.pipeline()
             .addLast("http-codec", new HttpServerCodec())
-            .addLast("http-keep-alive", new HttpServerKeepAliveHandler())
+            // TODO: Figure out how to use keep alive handler in the Netty 5
+            // .addLast("http-keep-alive", new HttpServerKeepAliveHandler())
             .addLast("http-aggregator", new HttpObjectAggregator(Integer.MAX_VALUE))
             .addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
               @Override
-              protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) {
+              protected void messageReceived(ChannelHandlerContext ctx, FullHttpRequest req) {
                 byte[] bytes = responseText.get().getBytes(UTF_8);
                 ByteBuf text = Unpooled.wrappedBuffer(bytes);
                 FullHttpResponse res = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, text);
                 res.headers().set(CONTENT_TYPE, MediaType.PLAIN_TEXT_UTF_8.toString());
-                res.headers().set(CONTENT_LENGTH, bytes.length);
+                res.headers().setInt(CONTENT_LENGTH, bytes.length);
 
                 ctx.writeAndFlush(res);
               }

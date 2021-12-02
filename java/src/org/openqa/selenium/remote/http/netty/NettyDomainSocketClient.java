@@ -137,7 +137,7 @@ class NettyDomainSocketClient extends RemoteCall implements HttpClient {
     }
     fullRequest.headers().set(HttpHeaderNames.HOST, "localhost");
     fullRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
-    fullRequest.headers().set(HttpHeaderNames.CONTENT_LENGTH, bytes.length);
+    fullRequest.headers().setInt(HttpHeaderNames.CONTENT_LENGTH, bytes.length);
 
     ChannelFuture future = channel.writeAndFlush(fullRequest);
 
@@ -180,9 +180,10 @@ class NettyDomainSocketClient extends RemoteCall implements HttpClient {
             .addLast(new HttpObjectAggregator(Integer.MAX_VALUE))
             .addLast(new SimpleChannelInboundHandler<FullHttpResponse>() {
               @Override
-              public void channelRead0(ChannelHandlerContext ctx, FullHttpResponse msg) {
+              public void messageReceived(ChannelHandlerContext ctx, FullHttpResponse msg) {
                 HttpResponse res = new HttpResponse().setStatus(msg.status().code());
-                msg.headers().forEach(entry -> res.addHeader(entry.getKey(), entry.getValue()));
+                msg.headers().forEach(entry -> res.addHeader(entry.getKey().toString(),
+                                                             entry.getValue().toString()));
 
                 try (InputStream is = new ByteBufInputStream(msg.content());
                      ByteArrayOutputStream bos = new ByteArrayOutputStream()) {

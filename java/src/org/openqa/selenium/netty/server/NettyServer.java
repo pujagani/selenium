@@ -17,6 +17,8 @@
 
 package org.openqa.selenium.netty.server;
 
+import static io.netty.util.internal.logging.InternalLoggerFactory.getDefaultFactory;
+
 import java.net.InetSocketAddress;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -26,10 +28,10 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.JdkLoggerFactory;
+
 import org.openqa.selenium.remote.AddWebDriverSpecHeaders;
 import org.openqa.selenium.grid.server.BaseServerOptions;
 import org.openqa.selenium.grid.server.Server;
@@ -77,21 +79,19 @@ public class NettyServer implements Server<NettyServer> {
     Require.nonNull("Handler", handler);
     this.websocketHandler = Require.nonNull("Factory for websocket connections", websocketHandler);
 
-    InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE);
+    InternalLoggerFactory.setDefaultFactory(new JdkLoggerFactory());
 
     boolean secure = options.isSecure();
     if (secure) {
       try {
-        sslCtx = SslContextBuilder.forServer(options.getCertificate(), options.getPrivateKey())
-          .build();
+        sslCtx = SslContext.newServerContext(options.getCertificate(), options.getPrivateKey());
       } catch (SSLException e) {
         throw new UncheckedIOException(new IOException("Certificate problem.", e));
       }
     } else if (options.isSelfSigned()) {
       try {
         SelfSignedCertificate cert = new SelfSignedCertificate();
-        sslCtx = SslContextBuilder.forServer(cert.certificate(), cert.privateKey())
-          .build();
+        sslCtx = SslContext.newServerContext(cert.certificate(), cert.privateKey());
       } catch (CertificateException | SSLException e) {
         throw new UncheckedIOException(new IOException("Self-signed certificate problem.", e));
       }

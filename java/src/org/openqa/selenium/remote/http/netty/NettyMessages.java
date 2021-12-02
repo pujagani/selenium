@@ -107,7 +107,7 @@ class NettyMessages {
                         : memoize(response::getResponseBodyAsStream));
 
     response.getHeaders().names().forEach(
-      name -> response.getHeaders(name).forEach(value -> toReturn.addHeader(name, value)));
+      name -> response.getHeaders(name).forEach(value -> toReturn.addHeader(name.toString(), value)));
 
     return toReturn;
   }
