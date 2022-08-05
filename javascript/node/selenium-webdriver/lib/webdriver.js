@@ -253,6 +253,8 @@ class IWebDriver {
    */
   execute(command) {} // eslint-disable-line
 
+  getStatus(url) {}
+
   /**
    * Sets the {@linkplain input.FileDetector file detector} that should be
    * used with this instance.
@@ -754,6 +756,15 @@ class WebDriver {
   /** @override */
   getSession() {
     return this.session_
+  }
+
+  /** @override */
+  static getStatus(url) {
+    let request = new http.Request('GET', 'status')
+    let client = new http.HttpClient(url)
+    return client.send(request).then(function (response) {
+      return JSON.parse(response.body)
+    })
   }
 
   /** @override */

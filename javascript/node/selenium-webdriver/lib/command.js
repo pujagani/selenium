@@ -173,6 +173,8 @@ const Name = {
   REMOVE_ALL_CREDENTIALS: 'removeAllCredentials',
   SET_USER_VERIFIED: 'setUserVerified',
 
+  STATUS: 'status',
+
   GET_AVAILABLE_LOG_TYPES: 'getAvailableLogTypes',
   GET_LOG: 'getLog',
 
