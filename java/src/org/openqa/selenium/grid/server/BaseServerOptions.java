@@ -69,18 +69,6 @@ public class BaseServerOptions {
     return port;
   }
 
-  @ManagedAttribute(name = "MaxServerThreads")
-  public int getMaxServerThreads() {
-    int count = config.getInt(SERVER_SECTION, "max-threads")
-      .orElse(Runtime.getRuntime().availableProcessors() * 3);
-
-    if (count < 0) {
-      throw new ConfigException("Maximum number of server threads cannot be less than 0: " + count);
-    }
-
-    return count;
-  }
-
   @ManagedAttribute(name = "Uri")
   public URI getExternalUri() {
     // Assume the host given is addressable if it's been set

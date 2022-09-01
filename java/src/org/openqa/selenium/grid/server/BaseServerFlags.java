@@ -61,13 +61,6 @@ public class BaseServerFlags implements HasRoles {
   private Integer port;
 
   @Parameter(
-    description = "Maximum number of listener threads. "
-                  + "Default value is: (available processors) * 3.",
-    names = "--max-threads")
-  @ConfigValue(section = SERVER_SECTION, name = "max-threads", example = "12")
-  private int maxThreads = Runtime.getRuntime().availableProcessors() * 3;
-
-  @Parameter(
     names = "--allow-cors",
     description = "Whether the Selenium server should allow web browser connections from any host",
     arity = 1)
