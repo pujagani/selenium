@@ -20,6 +20,7 @@ def selenium_java_deps():
                 ],
             ),
             "com.github.stephenc.jcip:jcip-annotations:1.0-1",
+            "com.google.cloud:google-cloud-storage:2.27.0",
             "com.google.code.gson:gson:2.10.1",
             "com.google.guava:guava:32.1.2-jre",
             "com.google.auto:auto-common:1.2.2",
