@@ -24,6 +24,17 @@ import java.util.function.Consumer;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.bidi.network.BeforeRequestSent;
 import org.openqa.selenium.bidi.network.ResponseDetails;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.bidi.network.BeforeRequestSent;
+import org.openqa.selenium.bidi.network.InterceptPhase;
+import org.openqa.selenium.bidi.network.ResponseDetails;
+import org.openqa.selenium.bidi.network.UrlPattern;
 import org.openqa.selenium.internal.Require;
 
 public class Network implements AutoCloseable {
@@ -84,6 +95,24 @@ public class Network implements AutoCloseable {
       this.bidi.addListener(browsingContextIds, responseStarted, consumer);
     }
   }
+
+  public String addIntercept(Set<InterceptPhase> phases) {
+    Require.stateCondition(phases.size() >= 1, "One or more intercept phases is required.", phases);
+    return this.bidi.send(
+        new Command<>(
+            "network.addIntercept",
+            Map.of("phases", phases),
+            jsonInput -> {
+              Map<String, Object> result = jsonInput.read(Map.class);
+              return (String) result.get("intercept");
+            }));
+  }
+
+  //  public String addIntercept(List<InterceptPhase> phases, List<UrlPattern> urlPatterns) {
+  //    Require.stateCondition(phases.size() >= 1, "One or more intercept phases is required.",
+  // phases);
+  //    return string;
+  //  }
 
   @Override
   public void close() {
