@@ -257,6 +257,7 @@ class DefaultMouseTest extends JupiterTestBase {
   @NotYetImplemented(IE)
   @NotYetImplemented(CHROME)
   @NotYetImplemented(EDGE)
+  @NotYetImplemented(CHROME)
   void testShouldClickElementInIFrame() {
     driver.get(pages.clicksPage);
     driver.switchTo().frame("source");
