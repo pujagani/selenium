@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.function.Predicate;
 import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.bidi.features.NetworkManager;
 import org.openqa.selenium.remote.AugmenterProvider;
 import org.openqa.selenium.remote.ExecuteMethod;
 import org.openqa.selenium.remote.http.ClientConfig;
@@ -52,7 +53,17 @@ public class BiDiProvider implements AugmenterProvider<HasBiDi> {
     HttpClient wsClient = clientFactory.createClient(wsConfig);
     Connection connection = new Connection(wsClient, wsUri.toString());
 
-    return () -> Optional.of(new BiDi(connection));
+    return new HasBiDi() {
+      @Override
+      public Optional<BiDi> maybeGetBiDi() {
+        return Optional.of(new BiDi(connection));
+      }
+
+      @Override
+      public NetworkManager network() {
+        return null;
+      }
+    };
   }
 
   private Optional<URI> getBiDiUrl(Capabilities caps) {

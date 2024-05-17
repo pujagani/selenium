@@ -18,6 +18,7 @@
 package org.openqa.selenium.bidi;
 
 import java.util.Optional;
+import org.openqa.selenium.bidi.features.NetworkManager;
 
 public interface HasBiDi {
   default BiDi getBiDi() {
@@ -26,4 +27,6 @@ public interface HasBiDi {
   }
 
   Optional<BiDi> maybeGetBiDi();
+
+  NetworkManager network();
 }

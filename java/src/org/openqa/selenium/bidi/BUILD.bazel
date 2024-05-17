@@ -2,11 +2,15 @@ load("//java:defs.bzl", "java_library")
 
 AUGMENTER_SRCS = [
     "BiDiProvider.java",
+    "browsingcontext/*.java",
+    "module/BrowsingContextInspector.java",
 ]
 
 java_library(
     name = "augmenter",
-    srcs = AUGMENTER_SRCS,
+    srcs = [
+        "BiDiProvider.java",
+    ],
     visibility = [
         "//java/src/org/openqa/selenium/remote:__pkg__",
     ],
@@ -20,10 +24,41 @@ java_library(
 )
 
 java_library(
+    name = "browsingcontext",
+    srcs = glob(
+        [
+            "browsingcontext/*.java",
+            "module/BrowsingContextInspector.java",
+        ],
+    ),
+    visibility = [
+        "//java/src/org/openqa/selenium/bidi:__subpackages__",
+        "//java/src/org/openqa/selenium/firefox:__subpackages__",
+        "//java/src/org/openqa/selenium/remote:__pkg__",
+        "//java/test/org/openqa/selenium/bidi:__subpackages__",
+        "//java/test/org/openqa/selenium/grid:__subpackages__",
+    ],
+    deps = [
+        ":bidi",
+        "//java:auto-service",
+        "//java/src/org/openqa/selenium:core",
+        "//java/src/org/openqa/selenium/json",
+        "//java/src/org/openqa/selenium/remote:api",
+        "//java/src/org/openqa/selenium/remote/http",
+    ],
+)
+
+java_library(
     name = "bidi",
     srcs = glob(
         [
             "*.java",
+            "log/*.java",
+            "features/*.java",
+            "module/*.java",
+            "network/*.java",
+            "script/*.java",
+            "storage/*.java",
         ],
         exclude = AUGMENTER_SRCS,
     ),

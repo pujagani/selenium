@@ -39,6 +39,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.bidi.BiDi;
 import org.openqa.selenium.bidi.BiDiException;
 import org.openqa.selenium.bidi.HasBiDi;
+import org.openqa.selenium.bidi.features.NetworkManager;
 import org.openqa.selenium.devtools.CdpEndpointFinder;
 import org.openqa.selenium.devtools.CdpInfo;
 import org.openqa.selenium.devtools.CdpVersionFinder;
@@ -378,6 +379,11 @@ public class FirefoxDriver extends RemoteWebDriver
   @Override
   public Optional<BiDi> maybeGetBiDi() {
     return biDi;
+  }
+
+  @Override
+  public NetworkManager network() {
+    return new NetworkManager(this);
   }
 
   @Override
