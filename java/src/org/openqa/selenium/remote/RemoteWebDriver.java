@@ -80,6 +80,7 @@ import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.WindowType;
 import org.openqa.selenium.bidi.BiDi;
+import org.openqa.selenium.bidi.BiDiException;
 import org.openqa.selenium.bidi.Connection;
 import org.openqa.selenium.bidi.Handle;
 import org.openqa.selenium.bidi.HasBiDi;
